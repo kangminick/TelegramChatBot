@@ -1,14 +1,13 @@
 from flask import Flask, render_template, request
 from decouple import config #token, id 값과 같은 공개하면 안되는 정보를 가져오기 위해 사용. (.env 파일에 들어있다.)
 import requests
+import random
 
 app = Flask(__name__)
 
 @app.route('/')
 def hello():
     return "hello"
-
-
 
 token = config('TELEGRAM_BOT_TOKEN')
 chat_id = config('CHAT_ID')
@@ -23,15 +22,23 @@ def write():
 @app.route('/send')
 def send():
     text = request.args.get('text')
-    requests.get(f'{url}{token}/sendmessage?chat_id={chat_id}&text={text}') #데이터를 같이 보내려면 ?를 사용
+    requests.get(f'{url}{token}/sendmessage?chat_id={chat_id}&text={text}') #telegram으로 정보 전송
     return render_template('send.html')
 
 @app.route(f'/{token}', methods=["post"]) #post 방식만 접근가능, 내 token을 알아야만 접근가능
 def telegram(): #telegram 함수 실행
-    # chat_id = request.get_json[][][]
-    # if text == "로또" :
-    #     # text
-    
+        
+    data = request.get_json() # 챗봇에 입력한 데이터의 json
+    text = (data['message']['text'])
+    chat_id = (data['message']['chat']['id'])
+    if text == "안녕" :
+        return_text = "안녕하세요"
+    elif text == "로또":
+        numbers = range(1,46)
+        return_text = sorted(random.sample(numbers, 6))
+    else : 
+        return_text = "지금 지원하는 채팅은 안녕입니다."
+    requests.get(f'{url}{token}/sendmessage?chat_id={chat_id}&text={return_text}') #telegram에서 답장
     return "ok", 200 # ok라는 문자와 200 (제대로 성공했다고 응답)를 리턴해준다.
 
 if __name__==("__main__"):
